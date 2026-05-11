@@ -7,11 +7,7 @@ import com.example.a26_04_ambientit_kotlin.data.remote.KtorWeatherApi
 import com.example.a26_04_ambientit_kotlin.data.remote.TempEntity
 import com.example.a26_04_ambientit_kotlin.data.remote.WeatherEntity
 import com.example.a26_04_ambientit_kotlin.data.remote.WindEntity
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -21,7 +17,7 @@ suspend fun main() {
 
     val viewModel = MainViewModel()
     viewModel.loadWeathers("Pantin")
-    while(viewModel.runInProgress.value) {
+    while (viewModel.runInProgress.value) {
         println("Attente....")
         delay(500)
     }
@@ -39,7 +35,11 @@ suspend fun main() {
 class MainViewModel : ViewModel() {
     //MutableStateFlow est une donnée observable
     val dataList = MutableStateFlow(emptyList<WeatherEntity>())
-    val runInProgress = MutableStateFlow(false)
+//    val dataList = _dataList.asStateFlow()
+//    val dataList2 : StateFlow<List<WeatherEntity>> = _dataList
+
+    var runInProgress = MutableStateFlow(false)
+
     val errorMessage = MutableStateFlow("")
 
     init {//Création d'un jeu de donnée au démarrage
@@ -57,14 +57,13 @@ class MainViewModel : ViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 errorMessage.value = e.message ?: "Une erreur est survenue"
-            }
-            finally {
+            } finally {
                 runInProgress.value = false
             }
         }
     }
 
-    fun loadFakeData(runInProgress :Boolean = false, errorMessage:String = "" ) {
+    fun loadFakeData(runInProgress: Boolean = false, errorMessage: String = "") {
         this.runInProgress.value = runInProgress
         this.errorMessage.value = errorMessage
         dataList.value = listOf(
