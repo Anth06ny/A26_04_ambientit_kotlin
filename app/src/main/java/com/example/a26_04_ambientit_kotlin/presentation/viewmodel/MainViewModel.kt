@@ -64,9 +64,6 @@ class MainViewModel : ViewModel() {
         }
     }
 
-
-
-
     fun loadFakeData(runInProgress :Boolean = false, errorMessage:String = "" ) {
         this.runInProgress.value = runInProgress
         this.errorMessage.value = errorMessage

@@ -5,17 +5,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import com.example.a26_04_ambientit_kotlin.R
+import com.example.a26_04_ambientit_kotlin.data.remote.WeatherEntity
 import com.example.a26_04_ambientit_kotlin.presentation.ui.theme.A26_04_ambientit_kotlinTheme
 import com.example.a26_04_ambientit_kotlin.presentation.viewmodel.MainViewModel
 
@@ -39,29 +47,59 @@ fun SearchScreen(
     mainViewModel: MainViewModel = MainViewModel()) {
 
     Column(modifier= modifier
-        .background(Color.Yellow)
-        .padding(8.dp)
-        .background(Color.Green)
+        .background(Color.LightGray)
         .fillMaxSize()
 
     ) {
-
-        println("SearchScreen()")
-        Text(text = "Text1",fontSize = 20.sp)
-        Spacer(Modifier.size(8.dp))
-        Text(text = "Text2",
-            fontSize = 14.sp,
-            modifier= Modifier.background(Color.Red))
-
         val list = mainViewModel.dataList.collectAsStateWithLifecycle().value
 
         repeat(list.size) {
-            PictureRowItem(list[it].name, Color.Blue)
+            PictureRowItem(data = list[it])
         }
     }
 }
 
-@Composable
-fun PictureRowItem(text: String, color: Color){
-    Text(text = text,fontSize = 20.sp, color = color)
+@Composable //Composable affichant 1 élément
+fun PictureRowItem(modifier: Modifier = Modifier, data: WeatherEntity) {
+
+    Row(modifier = modifier.background(Color.White).fillMaxWidth()) {
+
+//Permission Internet nécessaire
+        AsyncImage(
+            model = data.weather.firstOrNull()?.icon,
+            //Pour aller le chercher dans string.xml R de votre package com.nom.projet
+            //contentDescription = getString(R.string.picture_of_cat),
+            //En dur
+            contentDescription = "une photo de chat",
+            contentScale = ContentScale.FillWidth,
+
+            //Pour toto.png. Si besoin de choisir l'import pour la classe R, c'est celle de votre package
+            //Image d'échec de chargement qui sera utilisé par la preview
+            error = painterResource(R.drawable.error),
+            //Image d'attente.
+            placeholder = painterResource(R.drawable.ic_launcher_foreground),
+
+            onError = { println(it) },
+            modifier = Modifier
+                .heightIn(max = 100.dp)
+                .widthIn(max = 100.dp)
+        )
+
+        Column() {
+
+
+            Text(text = data.name,
+                fontSize = 20.sp,
+                color = Color.Blue
+                )
+
+            Text(text = data.getResume().take(20) + "...",
+                fontSize = 14.sp,
+                )
+
+        }
+
+
+    }
+
 }
