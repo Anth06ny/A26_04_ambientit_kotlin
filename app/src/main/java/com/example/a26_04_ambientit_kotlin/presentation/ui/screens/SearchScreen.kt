@@ -1,5 +1,7 @@
-package com.example.a26_04_ambientit_kotlin.presentation.screens
+package com.example.a26_04_ambientit_kotlin.presentation.ui.screens
 
+import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -46,13 +49,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.a26_04_ambientit_kotlin.R
 import com.example.a26_04_ambientit_kotlin.data.remote.WeatherEntity
+import com.example.a26_04_ambientit_kotlin.presentation.ui.MyError
 import com.example.a26_04_ambientit_kotlin.presentation.ui.theme.A26_04_ambientit_kotlinTheme
 import com.example.a26_04_ambientit_kotlin.presentation.viewmodel.MainViewModel
 
 @Preview(showBackground = true, showSystemUi = true)
 @Preview(
     showBackground = true, showSystemUi = true,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES or android.content.res.Configuration.UI_MODE_TYPE_NORMAL, locale = "fr"
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL, locale = "fr"
 )
 @Composable
 fun SearchScreenPreview() {
@@ -60,11 +64,12 @@ fun SearchScreenPreview() {
     //Utilisé par exemple dans MainActivity.kt sous setContent {...}
     A26_04_ambientit_kotlinTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+
             val mainViewModel: MainViewModel = viewModel()
-            mainViewModel.loadFakeData()
+            mainViewModel.loadFakeData(true, "Une erreur")
             SearchScreen(
                 modifier = Modifier.padding(innerPadding),
-                mainViewModel = mainViewModel
+                mainViewModel = mainViewModel,
             )
         }
     }
@@ -72,7 +77,7 @@ fun SearchScreenPreview() {
 
 @Preview(
     showBackground = true, showSystemUi = true,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES or android.content.res.Configuration.UI_MODE_TYPE_NORMAL, locale = "fr",
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL, locale = "fr",
     name = "No data"
 )
 @Composable
@@ -82,9 +87,10 @@ fun SearchScreenNoDataPreview() {
     A26_04_ambientit_kotlinTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             val mainViewModel: MainViewModel = viewModel()
+            //mainViewModel.runInProgress.value = false
             SearchScreen(
                 modifier = Modifier.padding(innerPadding),
-                mainViewModel = mainViewModel
+                mainViewModel = mainViewModel,
             )
         }
     }
@@ -93,8 +99,10 @@ fun SearchScreenNoDataPreview() {
 @Composable
 fun SearchScreen(
     modifier: Modifier = Modifier,
-    mainViewModel: MainViewModel = viewModel()
+    mainViewModel: MainViewModel = viewModel(),
+    onRowPictureClick:(Int) ->Unit= {}
 ) {
+
 
     Column(
         modifier = modifier.fillMaxSize(),
@@ -106,6 +114,8 @@ fun SearchScreen(
         val list = mainViewModel.dataList.collectAsStateWithLifecycle().value
         //.filter {            it.name.contains(searchText, true)        }
         val searchText by mainViewModel.searchText.collectAsStateWithLifecycle()
+        val errorMessage by mainViewModel.errorMessage.collectAsStateWithLifecycle()
+        val runInProgress by mainViewModel.runInProgress.collectAsStateWithLifecycle()
 
         SearchBar(
             searchText = searchText,
@@ -113,11 +123,18 @@ fun SearchScreen(
             mainViewModel.updateSearchText(it)
         }
 
+        MyError(errorMessage = errorMessage)
+
+        AnimatedVisibility(runInProgress) {
+            CircularProgressIndicator()
+        }
+
+
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)
         ) {
             items(list.size) {
-                PictureRowItem(data = list[it])
+                PictureRowItem(data = list[it], onRowPictureClick= onRowPictureClick)
             }
         }
 
@@ -147,6 +164,7 @@ fun SearchScreen(
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                 Text(stringResource(R.string.bt_load))
             }
+
 
         }
     }
@@ -191,7 +209,9 @@ fun SearchBar(
 
 
 @Composable //Composable affichant 1 élément
-fun PictureRowItem(modifier: Modifier = Modifier, data: WeatherEntity) {
+fun PictureRowItem(modifier: Modifier = Modifier, data: WeatherEntity,
+
+                   onRowPictureClick : (Int)->Unit = {}) {
 
     var expended by remember { mutableStateOf(false) }
 
@@ -219,6 +239,9 @@ fun PictureRowItem(modifier: Modifier = Modifier, data: WeatherEntity) {
             modifier = Modifier
                 .heightIn(max = 100.dp)
                 .widthIn(max = 100.dp)
+                .clickable{
+                    onRowPictureClick(data.id)
+                }
         )
 
         Column(

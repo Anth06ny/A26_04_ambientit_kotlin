@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.a26_04_ambientit_kotlin.data.remote.DescriptionEntity
 import com.example.a26_04_ambientit_kotlin.data.remote.KtorWeatherApi
+import com.example.a26_04_ambientit_kotlin.data.remote.KtorWeatherApi.loadWeathers
 import com.example.a26_04_ambientit_kotlin.data.remote.TempEntity
 import com.example.a26_04_ambientit_kotlin.data.remote.WeatherEntity
 import com.example.a26_04_ambientit_kotlin.data.remote.WindEntity
@@ -33,7 +34,7 @@ suspend fun main() {
     KtorWeatherApi.close()
 }
 
-class MainViewModel : ViewModel() {
+class MainViewModel() : ViewModel() {
     //MutableStateFlow est une donnée observable
     val dataList = MutableStateFlow(emptyList<WeatherEntity>())
 //    val dataList = _dataList.asStateFlow()
@@ -42,8 +43,12 @@ class MainViewModel : ViewModel() {
     var runInProgress = MutableStateFlow(false)
 
     val errorMessage = MutableStateFlow("")
-    private val _searchText = MutableStateFlow("")
+    private val _searchText = MutableStateFlow("Toulouse")
     val searchText = _searchText.asStateFlow()
+
+    init {
+        loadWeathers()
+    }
 
 //    init {//Création d'un jeu de donnée au démarrage
 //        println("Instanciation de MainViewModel")
@@ -52,7 +57,7 @@ class MainViewModel : ViewModel() {
 
     fun loadWeathers(cityName: String = searchText.value) {
         runInProgress.value = true
-
+        errorMessage.value = ""
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -66,7 +71,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun updateSearchText(newText:String){
+    fun updateSearchText(newText: String) {
         _searchText.value = newText
     }
 
