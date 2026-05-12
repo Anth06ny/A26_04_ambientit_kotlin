@@ -10,6 +10,7 @@ import com.example.a26_04_ambientit_kotlin.data.remote.WindEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 suspend fun main() {
@@ -41,13 +42,15 @@ class MainViewModel : ViewModel() {
     var runInProgress = MutableStateFlow(false)
 
     val errorMessage = MutableStateFlow("")
+    private val _searchText = MutableStateFlow("")
+    val searchText = _searchText.asStateFlow()
 
-    init {//Création d'un jeu de donnée au démarrage
-        println("Instanciation de MainViewModel")
-        loadFakeData()
-    }
+//    init {//Création d'un jeu de donnée au démarrage
+//        println("Instanciation de MainViewModel")
+//        loadFakeData()
+//    }
 
-    fun loadWeathers(cityName: String) {
+    fun loadWeathers(cityName: String = searchText.value) {
         runInProgress.value = true
 
 
@@ -61,6 +64,10 @@ class MainViewModel : ViewModel() {
                 runInProgress.value = false
             }
         }
+    }
+
+    fun updateSearchText(newText:String){
+        _searchText.value = newText
     }
 
     fun loadFakeData(runInProgress: Boolean = false, errorMessage: String = "") {

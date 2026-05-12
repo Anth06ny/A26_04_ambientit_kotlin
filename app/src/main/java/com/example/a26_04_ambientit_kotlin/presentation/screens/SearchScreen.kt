@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Clear
@@ -26,7 +28,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,7 +60,32 @@ fun SearchScreenPreview() {
     //Utilisé par exemple dans MainActivity.kt sous setContent {...}
     A26_04_ambientit_kotlinTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            SearchScreen(modifier = Modifier.padding(innerPadding))
+            val mainViewModel: MainViewModel = viewModel()
+            mainViewModel.loadFakeData()
+            SearchScreen(
+                modifier = Modifier.padding(innerPadding),
+                mainViewModel = mainViewModel
+            )
+        }
+    }
+}
+
+@Preview(
+    showBackground = true, showSystemUi = true,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES or android.content.res.Configuration.UI_MODE_TYPE_NORMAL, locale = "fr",
+    name = "No data"
+)
+@Composable
+fun SearchScreenNoDataPreview() {
+    //Il faut remplacer NomVotreAppliTheme par le thème de votre application
+    //Utilisé par exemple dans MainActivity.kt sous setContent {...}
+    A26_04_ambientit_kotlinTheme {
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            val mainViewModel: MainViewModel = viewModel()
+            SearchScreen(
+                modifier = Modifier.padding(innerPadding),
+                mainViewModel = mainViewModel
+            )
         }
     }
 }
@@ -74,14 +101,16 @@ fun SearchScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        var searchText by remember { mutableStateOf("") }
+        //var searchText by remember { mutableStateOf("") }
 
-        val list = mainViewModel.dataList.collectAsStateWithLifecycle().value.filter {
-            it.name.contains(searchText, true)
-        }
+        val list = mainViewModel.dataList.collectAsStateWithLifecycle().value
+        //.filter {            it.name.contains(searchText, true)        }
+        val searchText by mainViewModel.searchText.collectAsStateWithLifecycle()
 
-        SearchBar(searchText = searchText){
-            searchText = it
+        SearchBar(
+            searchText = searchText,
+            onSearchAction = {mainViewModel.loadWeathers()}) {
+            mainViewModel.updateSearchText(it)
         }
 
         LazyColumn(
@@ -94,7 +123,7 @@ fun SearchScreen(
 
         Row {
             Button(
-                onClick = { searchText ="" },
+                onClick = { mainViewModel.updateSearchText("") },
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding
             ) {
                 Icon(
@@ -107,7 +136,7 @@ fun SearchScreen(
             }
 
             Button(
-                onClick = { /* Do something! */ },
+                onClick = { mainViewModel.loadWeathers(searchText) },
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding
             ) {
                 Icon(
@@ -126,7 +155,8 @@ fun SearchScreen(
 @Composable
 fun SearchBar(
     modifier: Modifier = Modifier,
-    searchText : String,
+    searchText: String,
+    onSearchAction: () -> Unit,
     onValueChange: (String) -> Unit
 ) {
     TextField(
@@ -150,8 +180,8 @@ fun SearchBar(
         //Text("Recherche")
         //},
 
-        //keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), // Définir le bouton "Entrée" comme action de recherche
-        //keyboardActions = KeyboardActions(onSearch = {onSearchAction()}), // Déclenche l'action définie
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), // Définir le bouton "Entrée" comme action de recherche
+        keyboardActions = KeyboardActions(onSearch = { onSearchAction() }), // Déclenche l'action définie
         //Comment le composant doit se placer
         modifier = modifier
             .fillMaxWidth() // Prend toute la largeur
@@ -185,16 +215,18 @@ fun PictureRowItem(modifier: Modifier = Modifier, data: WeatherEntity) {
             error = painterResource(R.drawable.error),
             //Image d'attente.
             placeholder = painterResource(R.drawable.ic_launcher_foreground),
-
             onError = { println(it) },
             modifier = Modifier
                 .heightIn(max = 100.dp)
                 .widthIn(max = 100.dp)
         )
 
-        Column(modifier = Modifier.fillMaxWidth().clickable{
-            expended = !expended
-        }) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    expended = !expended
+                }) {
             Text(
                 text = data.name,
                 style = MaterialTheme.typography.titleLarge,
@@ -202,7 +234,7 @@ fun PictureRowItem(modifier: Modifier = Modifier, data: WeatherEntity) {
             )
 
             Text(
-                text = if(expended) data.getResume() else  data.getResume().take(20) + "...",
+                text = if (expended) data.getResume() else data.getResume().take(20) + "...",
                 fontSize = 14.sp,
                 modifier = Modifier.animateContentSize()
             )
