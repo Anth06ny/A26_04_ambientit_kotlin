@@ -74,4 +74,11 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.9.+")
 
+    //Pour la demande de permission
+    implementation ("com.google.accompanist:accompanist-permissions:+")
+//Pour la demande de localisation
+    implementation ("com.google.android.gms:play-services-location:+")
+
+
+
 }

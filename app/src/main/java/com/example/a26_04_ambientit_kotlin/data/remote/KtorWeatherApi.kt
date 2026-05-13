@@ -44,7 +44,7 @@ suspend fun main() {
 
 object KtorWeatherApi {
     private const val API_URL =
-        "https://api.openweathermap.org/data/2.5/find?appid=b80967f0a6bd10d23e44848547b26550&units=metric&lang=fr&q="
+        "https://api.openweathermap.org/data/2.5/find?appid=b80967f0a6bd10d23e44848547b26550&units=metric&lang=fr"
 
     //Création et réglage du client
     private val client = HttpClient {
@@ -74,7 +74,20 @@ object KtorWeatherApi {
             throw Exception("Il faut 3 caractères minimum")
         }
 
-        val response = client.get(API_URL + cityName)
+        val response = client.get(API_URL +"&q=" + cityName)
+        if (!response.status.isSuccess()) {
+            throw Exception("Erreur API: ${response.status} - ${response.bodyAsText()}")
+        }
+
+        return response.body<WeatherAPIResult>().list.onEach {
+            it.weather.forEach {
+                it.icon = "https://openweathermap.org/img/wn/${it.icon}@4x.png"
+            }
+        }
+    }
+
+    suspend fun loadWeathers(lat:Double, lng:Double): List<WeatherEntity> {
+        val response = client.get(API_URL + "&lat=$lat&lon=$lng")
         if (!response.status.isSuccess()) {
             throw Exception("Erreur API: ${response.status} - ${response.bodyAsText()}")
         }

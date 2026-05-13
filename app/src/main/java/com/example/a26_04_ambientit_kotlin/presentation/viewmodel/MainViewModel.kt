@@ -1,7 +1,9 @@
 package com.example.a26_04_ambientit_kotlin.presentation.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.a26_04_ambientit_kotlin.data.datasource.LocationDataSource
 import com.example.a26_04_ambientit_kotlin.data.remote.DescriptionEntity
 import com.example.a26_04_ambientit_kotlin.data.remote.KtorWeatherApi
 import com.example.a26_04_ambientit_kotlin.data.remote.KtorWeatherApi.loadWeathers
@@ -34,7 +36,7 @@ suspend fun main() {
     KtorWeatherApi.close()
 }
 
-class MainViewModel() : ViewModel() {
+class MainViewModel : ViewModel() {
     //MutableStateFlow est une donnée observable
     val dataList = MutableStateFlow(emptyList<WeatherEntity>())
 //    val dataList = _dataList.asStateFlow()
@@ -116,5 +118,33 @@ class MainViewModel() : ViewModel() {
                 wind = WindEntity(speed = 4.5)
             )
         ).shuffled() //shuffled() pour avoir un ordre différent à chaque appel
+    }
+
+    fun loadWeatherAround(isPermission: Boolean, context: Context) {
+        errorMessage.value = ""
+        if(!isPermission) {
+            errorMessage.value = "Il faut la permission"
+        }
+        else {
+            runInProgress.value = true
+
+            LocationDataSource.getLastKnownLocationEconomyMode(context)?.addOnSuccessListener {
+
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        dataList.value = KtorWeatherApi.loadWeathers(it.latitude, it.longitude)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        errorMessage.value = e.message ?: "Une erreur est survenue"
+                    } finally {
+                        runInProgress.value = false
+                    }
+                }
+            }?.addOnFailureListener {
+                errorMessage.value = "Localisation non trouvée"
+                runInProgress.value = false
+            } ?: run { runInProgress.value = false }
+
+        }
     }
 }

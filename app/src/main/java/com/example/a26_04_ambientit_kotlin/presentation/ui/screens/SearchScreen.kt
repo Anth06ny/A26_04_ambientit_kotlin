@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -52,6 +53,8 @@ import com.example.a26_04_ambientit_kotlin.data.remote.WeatherEntity
 import com.example.a26_04_ambientit_kotlin.presentation.ui.MyError
 import com.example.a26_04_ambientit_kotlin.presentation.ui.theme.A26_04_ambientit_kotlinTheme
 import com.example.a26_04_ambientit_kotlin.presentation.viewmodel.MainViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 
 @Preview(showBackground = true, showSystemUi = true)
 @Preview(
@@ -96,6 +99,7 @@ fun SearchScreenNoDataPreview() {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun SearchScreen(
     modifier: Modifier = Modifier,
@@ -116,6 +120,13 @@ fun SearchScreen(
         val searchText by mainViewModel.searchText.collectAsStateWithLifecycle()
         val errorMessage by mainViewModel.errorMessage.collectAsStateWithLifecycle()
         val runInProgress by mainViewModel.runInProgress.collectAsStateWithLifecycle()
+        val context = LocalContext.current
+
+
+        //Accès à une permission
+        val locationPermissionState = rememberPermissionState(android.Manifest.permission.ACCESS_FINE_LOCATION,
+            //Callback de la demande de permission
+            onPermissionResult = { mainViewModel.loadWeatherAround(it, context)})
 
         SearchBar(
             searchText = searchText,
@@ -165,7 +176,18 @@ fun SearchScreen(
                 Text(stringResource(R.string.bt_load))
             }
 
-
+            Button(
+                onClick = { locationPermissionState.launchPermissionRequest() },
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Send,
+                    contentDescription = "Localized description",
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                )
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text("Load from Localisation")
+            }
         }
     }
 }

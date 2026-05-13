@@ -1,6 +1,7 @@
 package com.example.a26_04_ambientit_kotlin
 
 import android.os.Bundle
+import android.window.OnBackInvokedDispatcher
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,4 +29,9 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun getOnBackInvokedDispatcher(): OnBackInvokedDispatcher {
+        return super.getOnBackInvokedDispatcher()
+    }
+
 }
